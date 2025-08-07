@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import '../services/api_service.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -103,24 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GFColors.LIGHT,
-      appBar: GFAppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: GFIconButton(
-          icon: const Icon(Icons.arrow_back, color: GFColors.DARK),
-          onPressed: () => Navigator.of(context).pop(),
-          type: GFButtonType.transparent,
-        ),
-        title: const Text(
-          '创建账户',
-          style: TextStyle(
-            color: GFColors.DARK,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -173,18 +157,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '用户名',
                     hintText: '请输入用户名',
-                    prefixIcon: const Icon(Icons.person_outline),
+                    prefixIcon: const Icon(Icons.person_outline, color: GFColors.PRIMARY),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: GFColors.SUCCESS),
-                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -205,18 +184,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '真实姓名',
                     hintText: '请输入真实姓名',
-                    prefixIcon: const Icon(Icons.badge_outlined),
+                    prefixIcon: const Icon(Icons.badge_outlined, color: GFColors.PRIMARY),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: GFColors.SUCCESS),
-                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -235,18 +209,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '邮箱',
                     hintText: '请输入邮箱地址',
-                    prefixIcon: const Icon(Icons.email_outlined),
+                    prefixIcon: const Icon(Icons.email_outlined, color: GFColors.PRIMARY),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: GFColors.SUCCESS),
-                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -268,10 +237,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '密码',
                     hintText: '请输入密码',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline, color: GFColors.PRIMARY),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: GFColors.PRIMARY,
                       ),
                       onPressed: () {
                         setState(() {
@@ -281,15 +251,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: GFColors.SUCCESS),
-                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -311,10 +276,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '确认密码',
                     hintText: '请再次输入密码',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline, color: GFColors.PRIMARY),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        color: GFColors.PRIMARY,
                       ),
                       onPressed: () {
                         setState(() {
@@ -324,15 +290,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: GFColors.SUCCESS),
-                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -344,41 +305,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
-                const SizedBox(height: 24),
-                
+
+                const SizedBox(height: 32),
+
                 // 注册按钮
-                GFButton(
-                  onPressed: _isLoading ? null : _register,
-                  text: _isLoading ? '注册中...' : '创建账户',
-                  size: GFSize.LARGE,
-                  shape: GFButtonShape.standard,
-                  type: GFButtonType.solid,
-                  color: GFColors.SUCCESS,
-                  fullWidthButton: true,
-                  icon: _isLoading 
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Icon(Icons.person_add, color: Colors.white),
+                SizedBox(
+                  height: 50,
+                  child: GFButton(
+                    onPressed: _isLoading ? null : _register,
+                    text: _isLoading ? '注册中...' : '创建账户',
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    shape: GFButtonShape.pills,
+                    type: GFButtonType.solid,
+                    color: GFColors.PRIMARY,
+                    fullWidthButton: true,
+                    icon: _isLoading
+                        ? const SpinKitFadingCube(
+                            color: Colors.white,
+                            size: 24.0,
+                          )
+                        : const Icon(Icons.person_add, color: Colors.white),
+                  ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
-                // 已有账户提示
+
+                // 登录链接
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '已有账户？',
+                      '已有账户?',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
-                    GFButton(
+                    TextButton(
                       onPressed: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
@@ -386,9 +346,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         );
                       },
-                      text: '立即登录',
-                      type: GFButtonType.transparent,
-                      color: GFColors.SUCCESS,
+                      child: const Text(
+                        '立即登录',
+                        style: TextStyle(
+                          color: GFColors.PRIMARY,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),

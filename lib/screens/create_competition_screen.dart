@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:getwidget/getwidget.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../services/api_service.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class CreateCompetitionScreen extends StatefulWidget {
   const CreateCompetitionScreen({Key? key}) : super(key: key);
@@ -81,8 +82,19 @@ class _CreateCompetitionScreenState extends State<CreateCompetitionScreen> {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}T${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:00';
   }
 
+  void _showErrorFlushbar(String message) {
+    Flushbar(
+      message: message,
+      duration: Duration(seconds: 3),
+      backgroundColor: Colors.red.shade600,
+      icon: Icon(Icons.error_outline, color: Colors.white),
+      leftBarIndicatorColor: Colors.red.shade900,
+    ).show(context);
+  }
+
   Future<void> _createCompetition() async {
     if (!_formKey.currentState!.validate()) {
+      _showErrorFlushbar('请填写所有必填项');
       return;
     }
 
@@ -90,30 +102,17 @@ class _CreateCompetitionScreenState extends State<CreateCompetitionScreen> {
         _registrationEndDate == null ||
         _startDate == null ||
         _endDate == null) {
-      GFToast.showToast(
-        '请选择所有时间',
-        context,
-        toastPosition: GFToastPosition.CENTER,
-      );
+      _showErrorFlushbar('请选择所有相关的日期和时间');
       return;
     }
 
-    // 验证时间逻辑
     if (_registrationStartDate!.isAfter(_registrationEndDate!)) {
-      GFToast.showToast(
-        '报名开始时间不能晚于报名结束时间',
-        context,
-        toastPosition: GFToastPosition.CENTER,
-      );
+      _showErrorFlushbar('报名开始时间不能晚于报名结束时间');
       return;
     }
 
     if (_startDate!.isAfter(_endDate!)) {
-      GFToast.showToast(
-        '竞赛开始时间不能晚于竞赛结束时间',
-        context,
-        toastPosition: GFToastPosition.CENTER,
-      );
+      _showErrorFlushbar('竞赛开始时间不能晚于竞赛结束时间');
       return;
     }
 
@@ -132,19 +131,17 @@ class _CreateCompetitionScreenState extends State<CreateCompetitionScreen> {
         status: _status,
       );
 
-      GFToast.showToast(
-        '竞赛创建成功',
-        context,
-        toastPosition: GFToastPosition.CENTER,
-      );
-
-      Navigator.pop(context, true); // 返回true表示创建成功
+      if (mounted) {
+        Flushbar(
+          message: '竞赛创建成功！',
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.green.shade600,
+          icon: Icon(Icons.check_circle_outline, color: Colors.white),
+          leftBarIndicatorColor: Colors.green.shade900,
+        ).show(context).then((_) => Navigator.pop(context, true));
+      }
     } catch (e) {
-      GFToast.showToast(
-        '创建失败: ${e.toString()}',
-        context,
-        toastPosition: GFToastPosition.CENTER,
-      );
+      _showErrorFlushbar('创建失败: ${e.toString()}');
     } finally {
       setState(() {
         _isLoading = false;
@@ -152,19 +149,41 @@ class _CreateCompetitionScreenState extends State<CreateCompetitionScreen> {
     }
   }
 
-  Widget _buildDateTimeSelector(String label, DateTime? dateTime, String type) {
-    return GFCard(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      content: ListTile(
-        title: Text(label),
-        subtitle: Text(
-          _formatDateTime(dateTime),
-          style: TextStyle(
-            color: dateTime == null ? Colors.grey : Colors.black87,
-          ),
+  Widget _buildDateTimeSelector(String label, DateTime? dateTime, String type, IconData icon) {
+    return InkWell(
+      onTap: () => _selectDateTime(context, type),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
         ),
-        trailing: const Icon(Icons.calendar_today),
-        onTap: () => _selectDateTime(context, type),
+        child: Row(
+          children: [
+            Icon(icon, color: Theme.of(context).primaryColor, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatDateTime(dateTime),
+                    style: TextStyle(
+                      color: dateTime == null ? Colors.grey.shade600 : Colors.black87,
+                      fontSize: 15,
+                      fontWeight: dateTime == null ? FontWeight.normal : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 16),
+          ],
+        ),
       ),
     );
   }
@@ -172,132 +191,119 @@ class _CreateCompetitionScreenState extends State<CreateCompetitionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('创建竞赛'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        title: const Text('创建新竞赛'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GFCard(
-                content: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '基本信息',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: '竞赛名称',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.emoji_events),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return '请输入竞赛名称';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: '竞赛描述',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.description),
-                        ),
-                        maxLines: 3,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return '请输入竞赛描述';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: _status,
-                        decoration: const InputDecoration(
-                          labelText: '竞赛状态',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.flag),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'UPCOMING',
-                            child: Text('即将开始'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'ONGOING',
-                            child: Text('进行中'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'COMPLETED',
-                            child: Text('已结束'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _status = value!;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              GFCard(
-                content: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '时间设置',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildDateTimeSelector('报名开始时间', _registrationStartDate, 'registrationStart'),
-                      _buildDateTimeSelector('报名结束时间', _registrationEndDate, 'registrationEnd'),
-                      _buildDateTimeSelector('竞赛开始时间', _startDate, 'start'),
-                      _buildDateTimeSelector('竞赛结束时间', _endDate, 'end'),
-                    ],
-                  ),
-                ),
-              ),
+              _buildInfoCard(),
+              const SizedBox(height: 24),
+              _buildTimeCard(),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: GFButton(
-                  onPressed: _isLoading ? null : _createCompetition,
-                  text: _isLoading ? '创建中...' : '创建竞赛',
-                  color: Colors.blue,
-                  size: GFSize.LARGE,
-                  type: GFButtonType.solid,
-                ),
-              ),
+              _buildSubmitButton(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('基本信息', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: '竞赛名称',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: Icon(Icons.emoji_events_outlined),
+              ),
+              validator: (value) => (value == null || value.trim().isEmpty) ? '请输入竞赛名称' : null,
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _descriptionController,
+              decoration: InputDecoration(
+                labelText: '竞赛描述',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: Icon(Icons.description_outlined),
+              ),
+              maxLines: 3,
+              validator: (value) => (value == null || value.trim().isEmpty) ? '请输入竞赛描述' : null,
+            ),
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _status,
+              decoration: InputDecoration(
+                labelText: '竞赛状态',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: Icon(Icons.flag_outlined),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'UPCOMING', child: Text('即将开始')),
+                DropdownMenuItem(value: 'ONGOING', child: Text('进行中')),
+                DropdownMenuItem(value: 'COMPLETED', child: Text('已结束')),
+              ],
+              onChanged: (value) => setState(() => _status = value!),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('时间设置', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildDateTimeSelector('报名开始时间', _registrationStartDate, 'registrationStart', Icons.how_to_reg_outlined),
+            _buildDateTimeSelector('报名结束时间', _registrationEndDate, 'registrationEnd', Icons.event_busy_outlined),
+            const Divider(height: 24),
+            _buildDateTimeSelector('竞赛开始时间', _startDate, 'start', Icons.play_circle_outline_rounded),
+            _buildDateTimeSelector('竞赛结束时间', _endDate, 'end', Icons.check_circle_outline_rounded),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return ElevatedButton.icon(
+      onPressed: _isLoading ? null : _createCompetition,
+      icon: _isLoading
+          ? SizedBox.shrink()
+          : Icon(Icons.add_circle_outline_rounded),
+      label: _isLoading
+          ? SpinKitFadingCube(color: Colors.white, size: 24)
+          : Text('确认创建', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
       ),
     );
   }

@@ -317,10 +317,15 @@ class ApiService {
     }
   }
 
-  // 根据ID获取竞赛详情
+  // 根据竞赛ID获取竞赛详情
   static Future<Map<String, dynamic>> getCompetitionById(int id) async {
+    final token = await getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/competitions/$id'),
+      Uri.parse('$baseUrl/competitions/detail/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
     );
     
     final data = jsonDecode(response.body);

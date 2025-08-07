@@ -7,6 +7,7 @@ class Certificate {
   final String filePath;
   final String uploadedAt;
 
+
   Certificate({
     required this.id,
     required this.competitionId,
@@ -15,6 +16,7 @@ class Certificate {
     required this.fileName,
     required this.filePath,
     required this.uploadedAt,
+
   });
 
   factory Certificate.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Certificate {
       fileName: json['fileName'] ?? '',
       filePath: json['filePath'] ?? '',
       uploadedAt: json['uploadedAt'] ?? '',
+
     );
   }
 
@@ -38,6 +41,7 @@ class Certificate {
       'fileName': fileName,
       'filePath': filePath,
       'uploadedAt': uploadedAt,
+
     };
   }
 

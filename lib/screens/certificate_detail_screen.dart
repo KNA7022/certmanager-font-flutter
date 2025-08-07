@@ -3,11 +3,14 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
-import 'package:getwidget/getwidget.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+
 import '../models/certificate.dart';
 import '../services/api_service.dart';
 import 'competition_detail_screen.dart';
+import '../utils/utils.dart';
 
 class CertificateDetailScreen extends StatefulWidget {
   final int certificateId;
@@ -98,12 +101,10 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
               _showImageDialog(tempFile);
             } else {
               // 非图像文件，尝试用外部应用打开
-              final uri = Uri.file(tempFile.path);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              } else {
-                // 如果无法打开，显示文件信息
-                _showFileInfoDialog(tempFile);
+              final fileSize = await tempFile.length();
+              final result = await OpenFile.open(tempFile.path);
+              if (result.type != ResultType.done) {
+                 _showFileInfoDialog(tempFile, fileSize);
               }
             }
           } else {
@@ -138,138 +139,7 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
     }
   }
 
-  void _showCertificateDialog() {
-    final certificateUrl = 'http://10.0.2.2:8080/api/certificates/${_certificate!.id}/view';
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.card_membership, color: Colors.blue),
-            SizedBox(width: 8),
-            Text('证书详情'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInfoRow('文件名', _certificate!.fileName),
-              _buildInfoRow('竞赛名称', _certificate!.competitionName),
-              _buildInfoRow('上传者', _certificate!.username),
-              _buildInfoRow('上传时间', _formatDateTime(_certificate!.uploadedAt)),
-              SizedBox(height: 16),
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                        SizedBox(width: 4),
-                        Text(
-                          '查看说明',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      '由于移动端限制，请复制以下链接到浏览器中查看证书文件：',
-                      style: TextStyle(fontSize: 13),
-                    ),
-                    SizedBox(height: 8),
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: SelectableText(
-                        certificateUrl,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.blue,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // 复制链接到剪贴板
-              _copyToClipboard(certificateUrl);
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.copy, size: 16),
-                SizedBox(width: 4),
-                Text('复制链接'),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('关闭'),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDateTime(String dateTimeStr) {
-    try {
-      final dateTime = DateTime.parse(dateTimeStr);
-      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return dateTimeStr;
-    }
-  }
 
   void _showImageDialog(File imageFile) {
     showDialog(
@@ -356,61 +226,41 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
     );
   }
 
-  void _showFileInfoDialog(File file) {
+  void _showFileInfoDialog(File file, int fileSize) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.insert_drive_file, color: Colors.blue),
-            SizedBox(width: 8),
-            Text('证书文件'),
+            Icon(Icons.info_outline, color: Theme.of(context).primaryColor),
+            SizedBox(width: 10),
+            Text('文件信息', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('文件名', _certificate!.fileName),
-            _buildInfoRow('竞赛名称', _certificate!.competitionName),
-            _buildInfoRow('上传者', _certificate!.username),
-            _buildInfoRow('上传时间', _formatDateTime(_certificate!.uploadedAt)),
+            _buildInfoRowDialog('文件名称', _certificate?.fileName ?? 'N/A'),
+            SizedBox(height: 8),
+            _buildInfoRowDialog('文件大小', formatFileSize(fileSize)),
             SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.orange),
-                      SizedBox(width: 4),
-                      Text(
-                        '文件已下载',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '证书文件已保存到临时目录，但无法在应用内预览此文件格式。',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '文件路径: ${file.path}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
+            Divider(),
+            SizedBox(height: 16),
+            Text(
+              '无法直接预览',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.orange.shade800),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '此文件类型不支持在应用内预览，但已保存到临时目录。您可以尝试使用其他应用打开。',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+            ),
+            SizedBox(height: 8),
+            SelectableText(
+              '路径: ${file.path}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -419,8 +269,25 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text('关闭'),
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              OpenFile.open(file.path);
+            },
+            child: Text('用其他应用打开', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoRowDialog(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Expanded(child: Text(value, style: TextStyle(fontSize: 14, color: Colors.grey.shade800))),
+      ],
     );
   }
 
@@ -463,17 +330,24 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除证书"${_certificate!.fileName}"吗？\n删除后将无法恢复。'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red.shade600),
+            SizedBox(width: 10),
+            Text('确认删除', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text('您确定要永久删除证书 "${_certificate!.fileName}" 吗？此操作无法撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text('取消', style: TextStyle(color: Colors.grey.shade700)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
+            style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+            child: Text('确认删除', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -515,273 +389,255 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
     }
   }
 
-  Widget _buildCertificateInfo() {
-    if (_certificate == null) {
-      return const SizedBox.shrink();
-    }
+  Widget _buildCertificatePreviewCard() {
+    final isPdf = _certificate!.isPdf;
+    final iconColor = isPdf ? Colors.red.shade600 : Colors.blue.shade600;
+    final bgColor = isPdf ? Colors.red.shade50 : Colors.blue.shade50;
 
-    return Column(
-      children: [
-        // 证书文件信息卡片
-        GFCard(
-          margin: const EdgeInsets.all(16),
-          content: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
               children: [
-                // 文件图标和基本信息
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _certificate!.isPdf ? Colors.red[50] : Colors.blue[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        _certificate!.isPdf ? Icons.picture_as_pdf : Icons.image,
-                        size: 48,
-                        color: _certificate!.isPdf ? Colors.red : Colors.blue,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _certificate!.fileName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _certificate!.isPdf ? Colors.red[100] : Colors.blue[100],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              _certificate!.fileExtension.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: _certificate!.isPdf ? Colors.red[800] : Colors.blue[800],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
+                  child: Icon(isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded, size: 48, color: iconColor),
                 ),
-                const SizedBox(height: 24),
-                
-                // 查看和下载按钮
-                Row(
-                  children: [
-                    Expanded(
-                      child: GFButton(
-                        onPressed: _viewCertificate,
-                        text: '查看证书',
-                        type: GFButtonType.solid,
-                        color: Colors.blue,
-                        icon: const Icon(
-                          Icons.visibility,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GFButton(
-                        onPressed: _viewCertificate,
-                        text: '下载证书',
-                        type: GFButtonType.outline,
-                        color: Colors.blue,
-                        icon: Icon(
-                          Icons.download,
-                          color: Colors.blue[600],
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        
-        // 详细信息卡片
-        GFCard(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          content: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '证书信息',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildInfoRow('证书ID', _certificate!.id.toString()),
-                const SizedBox(height: 12),
-                _buildInfoRow('文件名称', _certificate!.fileName),
-                const SizedBox(height: 12),
-                _buildInfoRow('上传者', _certificate!.username),
-                const SizedBox(height: 12),
-                _buildInfoRow('上传时间', _certificate!.formattedUploadTime),
-              ],
-            ),
-          ),
-        ),
-        
-        // 关联竞赛信息卡片
-        GFCard(
-          margin: const EdgeInsets.all(16),
-          content: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CompetitionDetailScreen(
-                    competitionId: _certificate!.competitionId,
-                  ),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '关联竞赛',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Text(
+                        _certificate!.fileName,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const Spacer(),
-                      Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey[600],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
+                      const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.orange[50],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.emoji_events,
-                          color: Colors.orange[600],
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _certificate!.competitionName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '点击查看竞赛详情',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                        child: Text(
+                          _certificate!.fileExtension.toUpperCase(),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: iconColor),
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _viewCertificate,
+              icon: Icon(Icons.visibility_rounded, size: 20),
+              label: Text('查看/下载证书'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCertificateDetailsCard() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('详细信息', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildDetailRow(Icons.person_outline, '上传者', _certificate!.username),
+            const Divider(height: 24),
+            _buildDetailRow(Icons.calendar_today_outlined, '上传时间', _certificate!.formattedUploadTime),
+            const Divider(height: 24),
+            _buildDetailRow(Icons.sd_storage_outlined, '文件类型', _certificate!.fileExtension.toUpperCase()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompetitionInfoCard() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CompetitionDetailScreen(competitionId: _certificate!.competitionId)),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('关联竞赛', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  Icon(Icons.chevron_right, color: Colors.grey.shade600),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+                    child: Icon(Icons.emoji_events_rounded, color: Colors.orange.shade600, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _certificate!.competitionName,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 4),
+                        Text('点击查看竞赛详情', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActionsCard() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            _buildActionButton(
+              icon: Icons.copy_all_rounded,
+              label: '复制证书分享链接',
+              onTap: () => _copyToClipboard(_certificate!.filePath),
+            ),
+            const Divider(height: 1),
+            _buildActionButton(
+              icon: Icons.delete_forever_rounded,
+              label: '删除证书',
+              color: Colors.red.shade600,
+              onTap: _deleteCertificate,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required IconData icon, required String label, Color? color, required VoidCallback onTap}) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? Theme.of(context).primaryColor),
+      title: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(value, style: TextStyle(color: Colors.black87)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(String dateTimeString) {
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey.shade600, size: 20),
+        const SizedBox(width: 16),
+        Text('$label:', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(value, style: TextStyle(fontSize: 15, color: Colors.grey.shade800), textAlign: TextAlign.end)),
       ],
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(_certificate?.fileName ?? '证书详情'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        actions: [
-          if (_certificate != null)
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                switch (value) {
-                  case 'delete':
-                    _deleteCertificate();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 20, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('删除证书', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: SpinKitFadingCube(color: Theme.of(context).primaryColor, size: 50.0))
           : _isDeleting
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('正在删除证书...'),
+                      SpinKitFadingCube(color: Theme.of(context).primaryColor, size: 50.0),
+                      const SizedBox(height: 24),
+                      Text('正在删除证书...', style: TextStyle(fontSize: 16, color: Colors.grey.shade700)),
                     ],
                   ),
                 )
               : SingleChildScrollView(
-                  child: _buildCertificateInfo(),
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    children: [
+                      if (_certificate != null) ...[
+                        _buildCertificatePreviewCard(),
+                        _buildCertificateDetailsCard(),
+                        _buildCompetitionInfoCard(),
+                        _buildActionsCard(),
+                      ]
+                    ],
+                  ),
                 ),
     );
   }

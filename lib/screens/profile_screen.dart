@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:getwidget/getwidget.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:another_flushbar/flushbar.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../utils/storage_helper.dart';
@@ -66,12 +67,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('加载用户信息失败: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Flushbar(
+          title: '加载失败',
+          message: e.toString(),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.red,
+          titleColor: Colors.white,
+          messageColor: Colors.white,
+          icon: const Icon(Icons.error, color: Colors.white),
+        ).show(context);
       }
     } finally {
       if (mounted) {
@@ -102,25 +106,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('个人信息更新成功'),
-            backgroundColor: Colors.green,
-          ),
-        );
         setState(() {
           _isEditing = false;
         });
         _loadUserInfo(); // 重新加载用户信息
+        Flushbar(
+          title: '成功',
+          message: '个人信息更新成功',
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.green,
+          titleColor: Colors.white,
+          messageColor: Colors.white,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+        ).show(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('更新失败: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Flushbar(
+          title: '更新失败',
+          message: e.toString(),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.red,
+          titleColor: Colors.white,
+          messageColor: Colors.white,
+          icon: const Icon(Icons.error, color: Colors.white),
+        ).show(context);
       }
     } finally {
       if (mounted) {
@@ -151,23 +161,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('密码修改成功'),
-            backgroundColor: Colors.green,
-          ),
-        );
         Navigator.pop(context); // 关闭修改密码对话框
         _clearPasswordFields();
+        Flushbar(
+          title: '成功',
+          message: '密码修改成功',
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.green,
+          titleColor: Colors.white,
+          messageColor: Colors.white,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+        ).show(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('修改密码失败: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Flushbar(
+          title: '修改失败',
+          message: e.toString(),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.red,
+          titleColor: Colors.white,
+          messageColor: Colors.white,
+          icon: const Icon(Icons.error, color: Colors.white),
+        ).show(context);
       }
     } finally {
       if (mounted) {
@@ -222,89 +238,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('修改密码'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.lock_reset_rounded, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 10),
+              const Text('修改密码', style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
           content: Form(
             key: _passwordFormKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextFormField(
+                _buildPasswordTextField(
                   controller: _oldPasswordController,
+                  label: '当前密码',
                   obscureText: !_showOldPassword,
-                  decoration: InputDecoration(
-                    labelText: '当前密码',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setDialogState(() {
-                          _showOldPassword = !_showOldPassword;
-                        });
-                      },
-                      icon: Icon(
-                        _showOldPassword ? Icons.visibility : Icons.visibility_off,
-                      ),
-                    ),
-                  ),
+                  toggleVisibility: () => setDialogState(() => _showOldPassword = !_showOldPassword),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '请输入当前密码';
-                    }
+                    if (value == null || value.isEmpty) return '请输入当前密码';
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                _buildPasswordTextField(
                   controller: _newPasswordController,
+                  label: '新密码',
                   obscureText: !_showNewPassword,
-                  decoration: InputDecoration(
-                    labelText: '新密码',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setDialogState(() {
-                          _showNewPassword = !_showNewPassword;
-                        });
-                      },
-                      icon: Icon(
-                        _showNewPassword ? Icons.visibility : Icons.visibility_off,
-                      ),
-                    ),
-                  ),
+                  toggleVisibility: () => setDialogState(() => _showNewPassword = !_showNewPassword),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '请输入新密码';
-                    }
-                    if (value.length < 6) {
-                      return '密码长度至少6位';
-                    }
+                    if (value == null || value.isEmpty) return '请输入新密码';
+                    if (value.length < 6) return '密码长度至少6位';
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                _buildPasswordTextField(
                   controller: _confirmPasswordController,
+                  label: '确认新密码',
                   obscureText: !_showConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: '确认新密码',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setDialogState(() {
-                          _showConfirmPassword = !_showConfirmPassword;
-                        });
-                      },
-                      icon: Icon(
-                        _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                      ),
-                    ),
-                  ),
+                  toggleVisibility: () => setDialogState(() => _showConfirmPassword = !_showConfirmPassword),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '请确认新密码';
-                    }
-                    if (value != _newPasswordController.text) {
-                      return '两次输入的密码不一致';
-                    }
+                    if (value == null || value.isEmpty) return '请确认新密码';
+                    if (value != _newPasswordController.text) return '两次输入的密码不一致';
                     return null;
                   },
                 ),
@@ -314,16 +291,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: _isChangingPassword ? null : () => Navigator.pop(context),
-              child: const Text('取消'),
+              child: Text('取消', style: TextStyle(color: Colors.grey.shade700)),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: _isChangingPassword ? null : _changePassword,
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
               child: _isChangingPassword
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('确认修改'),
             ),
           ],
@@ -332,92 +308,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildPasswordTextField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscureText,
+    required VoidCallback toggleVisibility,
+    required FormFieldValidator<String> validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        prefixIcon: const Icon(Icons.lock_outline_rounded),
+        suffixIcon: IconButton(
+          onPressed: toggleVisibility,
+          icon: Icon(obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded),
+        ),
+      ),
+      validator: validator,
+    );
+  }
+
   Widget _buildUserInfoCard() {
     if (_user == null) {
       return const SizedBox.shrink();
     }
 
-    return GFCard(
-      margin: const EdgeInsets.all(16),
-      content: Padding(
-        padding: const EdgeInsets.all(20),
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            // 头像和基本信息
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.blue[100],
-                  child: Text(
-                    _user!.username.isNotEmpty ? _user!.username[0].toUpperCase() : 'U',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[800],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _user!.username,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _user!.email,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _user!.role == 'ADMIN' ? Colors.red[100] : Colors.blue[100],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          _user!.role == 'ADMIN' ? '管理员' : '普通用户',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: _user!.role == 'ADMIN' ? Colors.red[800] : Colors.blue[800],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage('https://cdn.jsdelivr.net/gh/yon3/static@main/avatar.png'),
             ),
-            const SizedBox(height: 20),
-            
-            // 统计信息
+            const SizedBox(height: 16),
+            Text(
+              _user!.username,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _user!.email,
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            Chip(
+              label: Text(
+                _user!.role == 'ADMIN' ? '管理员' : '普通用户',
+                style: TextStyle(color: _user!.role == 'ADMIN' ? Colors.red.shade800 : Colors.blue.shade800, fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: _user!.role == 'ADMIN' ? Colors.red.shade50 : Colors.blue.shade50,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(
-                  child: _buildStatItem('证书数量', _user!.certificateCount.toString()),
-                ),
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: Colors.grey[300],
-                ),
-                Expanded(
-                  child: _buildStatItem('注册时间', _formatDate(_user!.createdAt)),
-                ),
+                _buildStatItem(Icons.card_membership_rounded, '证书数量', _user!.certificateCount.toString(), Colors.orange.shade600),
+                _buildStatItem(Icons.event_available_rounded, '注册于', _formatDate(_user!.createdAt), Colors.green.shade600),
               ],
             ),
           ],
@@ -426,84 +383,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(IconData icon, String label, String value, Color color) {
     return Column(
       children: [
+        Icon(icon, size: 36, color: color),
+        const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
         ),
       ],
     );
   }
 
   Widget _buildEditForm() {
-    return GFCard(
-      margin: const EdgeInsets.all(16),
-      content: Padding(
-        padding: const EdgeInsets.all(20),
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 '编辑个人信息',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _usernameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '用户名',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '请输入用户名';
-                  }
+                  if (value == null || value.trim().isEmpty) return '请输入用户名';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '邮箱',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '请输入邮箱';
-                  }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                    return '请输入有效的邮箱地址';
-                  }
+                  if (value == null || value.trim().isEmpty) return '请输入邮箱';
+                  if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value)) return '请输入有效的邮箱地址';
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
-                    child: GFButton(
+                    child: OutlinedButton(
                       onPressed: () {
                         setState(() {
                           _isEditing = false;
@@ -511,19 +456,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _emailController.text = _user!.email;
                         });
                       },
-                      text: '取消',
-                      type: GFButtonType.outline,
-                      color: Colors.grey,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('取消'),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: GFButton(
+                    child: ElevatedButton.icon(
                       onPressed: _isUpdating ? null : _updateUserInfo,
-                      text: _isUpdating ? '更新中...' : '保存',
-                      type: GFButtonType.solid,
-                      color: Colors.blue,
-                      disabledColor: Colors.grey,
+                      icon: _isUpdating
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.save_rounded),
+                      label: const Text('保存'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
                 ],
@@ -536,56 +487,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          if (!_isEditing) ...[
-            GFButton(
-              onPressed: () {
-                setState(() {
-                  _isEditing = true;
-                });
-              },
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Column(
+          children: [
+            _buildActionButton(
+              icon: Icons.edit_note_rounded,
               text: '编辑个人信息',
-              type: GFButtonType.solid,
-              color: Colors.blue,
-              size: GFSize.LARGE,
-              fullWidthButton: true,
-              icon: const Icon(
-                Icons.edit,
-                color: Colors.white,
-              ),
+              onTap: () => setState(() => _isEditing = true),
             ),
-            const SizedBox(height: 12),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            _buildActionButton(
+              icon: Icons.lock_reset_rounded,
+              text: '修改密码',
+              onTap: _showChangePasswordDialog,
+            ),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            _buildActionButton(
+              icon: Icons.logout_rounded,
+              text: '退出登录',
+              onTap: _logout,
+              color: Colors.red.shade600,
+            ),
           ],
-          GFButton(
-            onPressed: _showChangePasswordDialog,
-            text: '修改密码',
-            type: GFButtonType.outline,
-            color: Colors.orange,
-            size: GFSize.LARGE,
-            fullWidthButton: true,
-            icon: Icon(
-              Icons.lock,
-              color: Colors.orange[600],
-            ),
-          ),
-          const SizedBox(height: 12),
-          GFButton(
-            onPressed: _logout,
-            text: '退出登录',
-            type: GFButtonType.solid,
-            color: Colors.red,
-            size: GFSize.LARGE,
-            fullWidthButton: true,
-            icon: const Icon(
-              Icons.logout,
-              color: Colors.white,
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildActionButton({required IconData icon, required String text, required VoidCallback onTap, Color? color}) {
+    final primaryColor = Theme.of(context).primaryColor;
+    return ListTile(
+      leading: Icon(icon, color: color ?? primaryColor),
+      title: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 16)),
+      trailing: Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     );
   }
 
@@ -601,26 +543,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('个人资料'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        title: const Text('个人中心'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
         actions: [
-          if (!_isLoading && !_isEditing)
+          if (!_isLoading)
             IconButton(
               onPressed: _loadUserInfo,
-              icon: const Icon(Icons.refresh),
+              icon: Icon(Icons.refresh_rounded, color: Theme.of(context).primaryColor),
+              tooltip: '刷新',
             ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: SpinKitFadingCube(
+                color: Theme.of(context).primaryColor,
+                size: 50.0,
+              ),
+            )
           : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
-                  if (!_isEditing) _buildUserInfoCard(),
-                  if (_isEditing) _buildEditForm(),
-                  _buildActionButtons(),
+                  _buildUserInfoCard(),
+                  const SizedBox(height: 8),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    child: _isEditing
+                        ? _buildEditForm()
+                        : _buildActionButtons(),
+                  ),
                 ],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:getwidget/getwidget.dart';
 import '../models/competition.dart';
 import '../services/api_service.dart';
@@ -64,12 +65,14 @@ class _CompetitionListScreenState extends State<CompetitionListScreen>
       print('API返回数据: $response');
       print('========================');
       
-      // 处理单个竞赛对象返回格式
-      if (response['data'] != null) {
-        final competition = Competition.fromJson(response['data']);
+      // 处理竞赛列表数据
+      if (response['data'] != null && response['data'] is List) {
+        final competitions = (response['data'] as List)
+            .map((json) => Competition.fromJson(json))
+            .toList();
         if (mounted) {
           setState(() {
-            _myCompetitions = [competition];
+            _myCompetitions = competitions;
           });
         }
       } else {
@@ -93,9 +96,13 @@ class _CompetitionListScreenState extends State<CompetitionListScreen>
   }
 
   Widget _buildCompetitionCard(Competition competition) {
-    return GFCard(
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      content: InkWell(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.push(
             context,
@@ -223,7 +230,7 @@ class _CompetitionListScreenState extends State<CompetitionListScreen>
   Widget _buildCompetitionList(List<Competition> competitions, bool isPublic) {
     if (_isLoading && competitions.isEmpty) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: SpinKitFadingCube(color: GFColors.PRIMARY, size: 50.0),
       );
     }
 
@@ -278,15 +285,17 @@ class _CompetitionListScreenState extends State<CompetitionListScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('竞赛列表'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        title: const Text('竞赛列表', style: TextStyle(color: GFColors.DARK, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: GFColors.DARK,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
+          labelColor: GFColors.DARK,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: GFColors.PRIMARY,
           tabs: const [
             Tab(text: '我的竞赛'),
           ],

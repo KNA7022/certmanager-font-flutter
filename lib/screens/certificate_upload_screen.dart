@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../services/api_service.dart';
 import '../models/competition.dart';
 
@@ -66,7 +68,7 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
 
     try {
       final response = await ApiService.getMyCompetitions();
-      final List<dynamic> competitionsData = response['data']['competitions'];
+      final List<dynamic> competitionsData = response['data'] is List ? response['data'] : [];
       
       setState(() {
         _competitions = competitionsData.map((json) => Competition.fromJson(json)).toList();
@@ -220,88 +222,97 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
 
   Widget _buildFilePreview() {
     if (_selectedFile == null) {
-      return GFCard(
-        content: Container(
+      return DottedBorder(
+        color: Colors.grey[400]!,
+        strokeWidth: 2,
+        dashPattern: const [8, 4],
+        radius: const Radius.circular(12),
+        borderType: BorderType.RRect,
+        child: Container(
           height: 200,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.cloud_upload_outlined,
-                size: 64,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '点击选择文件',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.cloud_upload_outlined,
+                  size: 64,
+                  color: Colors.blue[300],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '支持 PDF、JPG、PNG 格式\n文件大小不超过 10MB',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
+                const SizedBox(height: 16),
+                const Text(
+                  '点击此处选择文件',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.blue,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  '支持 PDF, JPG, PNG 格式，文件大小不超过 10MB',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     return GFCard(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Icon(
-                  _fileName!.toLowerCase().endsWith('.pdf')
-                      ? Icons.picture_as_pdf
-                      : Icons.image,
-                  size: 48,
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _fileName!,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$_fileType • $_fileSize',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+            Icon(
+              _fileName!.toLowerCase().endsWith('.pdf')
+                  ? Icons.picture_as_pdf_rounded
+                  : Icons.image_rounded,
+              size: 48,
+              color: Colors.blue,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _fileName!,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                IconButton(
-                  onPressed: _removeFile,
-                  icon: const Icon(
-                    Icons.close,
-                    color: Colors.red,
+                  const SizedBox(height: 4),
+                  Text(
+                    '$_fileType • $_fileSize',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: _removeFile,
+              icon: const Icon(
+                Icons.delete_forever_rounded,
+                color: Colors.red,
+              ),
             ),
           ],
         ),
@@ -313,27 +324,28 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
     // 如果传入了竞赛参数，显示竞赛信息
     if (widget.competitionId != null && widget.competitionName != null) {
       return GFCard(
+        elevation: 2,
+        borderRadius: BorderRadius.circular(12),
         content: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '竞赛信息',
+                '所属竞赛',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Icon(
-                    Icons.emoji_events,
+                    Icons.emoji_events_rounded,
                     color: Colors.orange[600],
-                    size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       widget.competitionName!,
@@ -353,27 +365,34 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
     
     // 否则显示竞赛选择器
     if (_isLoadingCompetitions) {
-      return GFCard(
-        content: Container(
-          height: 60,
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+      return const Center(
+        child: SpinKitFadingCube(
+          color: Colors.blue,
+          size: 30.0,
         ),
       );
     }
 
     if (_competitions.isEmpty) {
       return GFCard(
+        elevation: 2,
+        borderRadius: BorderRadius.circular(12),
         content: Container(
-          height: 60,
+          height: 80,
           child: Center(
-            child: Text(
-              '暂无可用竞赛',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange[300], size: 32),
+                const SizedBox(height: 8),
+                Text(
+                  '暂无可上传证书的竞赛',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -381,31 +400,34 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
     }
 
     return GFCard(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
       content: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '选择竞赛',
+              '选择要上传的竞赛',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             DropdownButtonFormField<Competition>(
               value: _selectedCompetition,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: '请选择竞赛',
+              isExpanded: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                hintText: '请选择一个竞赛',
+                prefixIcon: const Icon(Icons.emoji_events_outlined),
               ),
               items: _competitions.map((competition) {
                 return DropdownMenuItem<Competition>(
                   value: competition,
                   child: Text(
                     competition.name,
-                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 );
@@ -427,8 +449,9 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('上传证书'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -442,16 +465,22 @@ class _CertificateUploadScreenState extends State<CertificateUploadScreen> {
               child: _buildFilePreview(),
             ),
             const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: GFButton(
-                onPressed: _isUploading ? null : _uploadCertificate,
-                text: _isUploading ? '上传中...' : '上传证书',
-                color: Colors.blue,
-                size: GFSize.LARGE,
-                type: GFButtonType.solid,
-              ),
+            GFButton(
+              onPressed: _isUploading ? null : _uploadCertificate,
+              text: '确认上传',
+              shape: GFButtonShape.pills,
+              size: GFSize.LARGE,
+              fullWidthButton: true,
+              icon: _isUploading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.cloud_upload, color: Colors.white),
             ),
           ],
         ),

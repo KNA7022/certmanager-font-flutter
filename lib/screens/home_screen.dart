@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:getwidget/getwidget.dart';
 import '../services/api_service.dart';
 import '../models/competition.dart';
@@ -65,19 +66,20 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _username = futures[0]['data']['username'] ?? '';
           print('=== 用户名设置完成: $_username ===');
-          // 处理单个竞赛对象返回格式
+          // 处理竞赛列表数据
           print('=== 竞赛数据处理调试 ===');
           print('futures[1]["data"]: ${futures[1]['data']}');
           print('futures[1]["data"]类型: ${futures[1]['data'].runtimeType}');
           try {
-            if (futures[1]['data'] != null) {
-              final competition = Competition.fromJson(futures[1]['data']);
-              _upcomingCompetitions = [competition];
-              print('解析后的竞赛对象: ${competition.name}');
+            if (futures[1]['data'] != null && futures[1]['data'] is List) {
+              _upcomingCompetitions = (futures[1]['data'] as List)
+                  .map((json) => Competition.fromJson(json))
+                  .toList();
+              print('解析后的竞赛数量: ${_upcomingCompetitions.length}');
               print('_upcomingCompetitions长度: ${_upcomingCompetitions.length}');
             } else {
               _upcomingCompetitions = [];
-              print('竞赛数据为空');
+              print('竞赛数据为空或格式不正确');
             }
           } catch (e) {
             print('竞赛数据解析错误: $e');
@@ -155,19 +157,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHomePage() {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('证书管理系统'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        title: const Text('证书管理系统', style: TextStyle(color: GFColors.DARK, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: GFColors.DARK,
         actions: [
           IconButton(
             onPressed: _loadHomeData,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: GFColors.DARK),
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: SpinKitFadingCube(color: GFColors.PRIMARY, size: 50.0))
           : RefreshIndicator(
               onRefresh: _loadHomeData,
               child: SingleChildScrollView(
@@ -177,20 +181,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 欢迎卡片
-                    GFCard(
-                      content: Padding(
+                    Card(
+                      elevation: 4,
+                      shadowColor: Colors.grey.withOpacity(0.2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 30,
-                              backgroundColor: Colors.blue[100],
+                              backgroundColor: GFColors.PRIMARY.withOpacity(0.1),
                               child: Text(
                                 _username.isNotEmpty ? _username[0].toUpperCase() : 'U',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blue[800],
+                                  color: GFColors.PRIMARY,
                                 ),
                               ),
                             ),
@@ -208,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   const Text(
-                                    '管理您的竞赛证书',
+                                    '开始管理您的竞赛证书',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey,
@@ -345,26 +352,27 @@ class _HomeScreenState extends State<HomeScreen> {
     Color color,
     VoidCallback onTap,
   ) {
-    return GFCard(
-      content: InkWell(
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 32,
-                color: color,
-              ),
-              const SizedBox(height: 8),
+              Icon(icon, size: 32, color: color),
+              const SizedBox(height: 12),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
                 textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -374,14 +382,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUpcomingCompetitions() {
-    print('=== _buildUpcomingCompetitions调试 ===');
-    print('_upcomingCompetitions.isEmpty: ${_upcomingCompetitions.isEmpty}');
-    print('_upcomingCompetitions.length: ${_upcomingCompetitions.length}');
-    print('_upcomingCompetitions内容: $_upcomingCompetitions');
-    
     if (_upcomingCompetitions.isEmpty) {
-      return GFCard(
-        content: Padding(
+      return Card(
+        elevation: 2,
+        shadowColor: Colors.grey.withOpacity(0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
@@ -406,49 +412,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Column(
       children: _upcomingCompetitions.map((competition) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: GFCard(
-            content: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.orange[100],
-                child: Icon(
-                  Icons.emoji_events,
-                  color: Colors.orange[800],
-                ),
+        return Card(
+          elevation: 2,
+          shadowColor: Colors.grey.withOpacity(0.1),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.only(bottom: 8.0),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            leading: CircleAvatar(
+              backgroundColor: Colors.orange[100],
+              child: Icon(
+                Icons.emoji_events,
+                color: Colors.orange[800],
               ),
-              title: Text(
-                competition.name,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(
-                '开始时间: ${_formatDate(competition.startDate)}',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: competition.getStatusColor().withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  competition.getStatusText(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: competition.getStatusColor(),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  _currentIndex = 1;
-                });
-              },
             ),
+            title: Text(
+              competition.name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              '开始时间: ${_formatDate(competition.startDate)}',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: competition.getStatusColor().withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                competition.getStatusText(),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: competition.getStatusColor(),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                _currentIndex = 1;
+              });
+            },
           ),
         );
       }).toList(),
@@ -457,8 +465,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRecentCertificates() {
     if (_recentCertificates.isEmpty) {
-      return GFCard(
-        content: Padding(
+      return Card(
+        elevation: 2,
+        shadowColor: Colors.grey.withOpacity(0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
@@ -483,32 +494,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Column(
       children: _recentCertificates.map((certificate) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: GFCard(
-            content: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.blue[100],
-                child: Icon(
-                  certificate.isImageFile() ? Icons.image : Icons.picture_as_pdf,
-                  color: Colors.blue[800],
-                ),
+        return Card(
+          elevation: 2,
+          shadowColor: Colors.grey.withOpacity(0.1),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.only(bottom: 8.0),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            leading: CircleAvatar(
+              backgroundColor: Colors.blue[100],
+              child: Icon(
+                certificate.isImageFile() ? Icons.image : Icons.picture_as_pdf,
+                color: Colors.blue[800],
               ),
-              title: Text(
-                certificate.competitionName,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(
-                '上传时间: ${certificate.getFormattedUploadTime()}',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                setState(() {
-                  _currentIndex = 2;
-                });
-              },
             ),
+            title: Text(
+              certificate.competitionName,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              '上传时间: ${certificate.getFormattedUploadTime()}',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            onTap: () {
+              setState(() {
+                _currentIndex = 2;
+              });
+            },
           ),
         );
       }).toList(),

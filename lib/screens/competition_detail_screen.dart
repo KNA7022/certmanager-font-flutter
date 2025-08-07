@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:getwidget/getwidget.dart';
 import '../models/competition.dart';
 import '../models/certificate.dart';
@@ -149,9 +150,12 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
       return const SizedBox.shrink();
     }
 
-    return GFCard(
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.all(16),
-      content: Padding(
+      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +252,8 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
                 text: '上传证书',
                 size: GFSize.SMALL,
                 type: GFButtonType.solid,
-                color: Colors.blue,
+                color: GFColors.PRIMARY,
+                shape: GFButtonShape.pills,
               ),
             ],
           ),
@@ -264,7 +269,7 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
+          child: SpinKitFadingCube(color: GFColors.PRIMARY, size: 50.0),
         ),
       );
     }
@@ -396,10 +401,13 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(_competition?.name ?? '竞赛详情'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        title: Text(_competition?.name ?? '竞赛详情', style: const TextStyle(color: GFColors.DARK, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: GFColors.DARK,
+        iconTheme: const IconThemeData(color: GFColors.DARK),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
